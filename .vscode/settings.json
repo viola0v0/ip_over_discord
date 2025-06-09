@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "unistd.h": "c",
+        "base64.h": "c",
+        "stddef.h": "c"
+    }
+}
