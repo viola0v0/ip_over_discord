@@ -2,7 +2,6 @@
 #ifndef TUN_H
 #define TUN_H
 
-#include <stdint.h>
 #include <stddef.h>
 #include <sys/types.h>
 

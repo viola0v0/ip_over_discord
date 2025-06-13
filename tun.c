@@ -12,15 +12,16 @@
 
 // 出错时要打印足够的日志方便定位。
 
-#include "tun.h"
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <errno.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <linux/if_tun.h>
-#include <errno.h>
+#include "tun.h"
  
  /**
   * tun_alloc - allocate or connect to a tun device
