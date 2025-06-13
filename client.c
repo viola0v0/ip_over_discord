@@ -31,7 +31,12 @@ extern pthread_mutex_t curl_mutex;
 #include <string.h>
 #include <unistd.h>
 #include <pthread.h>
-#include <linux/if_tun.h>  // IFF_TUN, IFF_NO_PI
+#ifdef _WIN32
+  // Windows 下改用 Wintun/OpenVPN TAP 等
+  #include "wintun.h"    // 或者 packet32.h 等
+#else
+  #include <linux/if_tun.h>
+#endif
 #include "tun.h"
 #include "discord.h"
 #include "base64.h"
