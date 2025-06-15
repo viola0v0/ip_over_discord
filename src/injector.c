@@ -13,14 +13,29 @@ static int g_tun_fd;
 
 static void *injector_loop(void *arg)
 {
+    printf("[INJ] injector_loop running\n");
+    fflush(stdout);
+
     while (injector_running)
     {
         size_t pkt_len = 0;
         char *pkt = http_client_poll(&pkt_len);
         if (pkt_len > 0 && pkt)
         {
-            printf("[injector] got %zu bytes from HTTP\n", pkt_len);
-            write(g_tun_fd, pkt, pkt_len);
+            printf("[INJ] got %zu bytes from HTTP\n", pkt_len);
+            fflush(stdout);
+
+            ssize_t w = write(g_tun_fd, pkt, pkt_len);
+            if (w < 0)
+            {
+                perror("[INJ] write to tun0 failed");
+            }
+            else
+            {
+                printf("[INJ] wrote %zd bytes to tun0\n", w);
+            }
+            fflush(stdout);
+
             free(pkt);
         }
         else
@@ -31,12 +46,11 @@ static void *injector_loop(void *arg)
     return NULL;
 }
 
-int injector_start(int tun_fd, const char *server_host, int server_port)
+int injector_start(int tun_fd)
 {
     g_tun_fd = tun_fd;
-    char url[128];
-    snprintf(url, sizeof(url), "http://%s:%d", server_host, server_port);
-    http_client_init(url);
+    printf("[INJ] start injector on tun fd=%d\n", tun_fd);
+    fflush(stdout);
     injector_running = 1;
     pthread_create(&injector_thread, NULL, injector_loop, NULL);
     return 0;

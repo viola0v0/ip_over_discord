@@ -4,7 +4,7 @@
 
 #include <stddef.h>
 
-int injector_start(int tun_fd, const char *server_host, int server_port);
+int injector_start(int tun_fd);
 
 void injector_stop(void);
 

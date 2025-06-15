@@ -41,6 +41,9 @@ int tun_alloc(char *dev, int flags)
 
     // 返回实际分配的设备名称
     strcpy(dev, ifr.ifr_name);
+    // —— 插桩：tun_alloc 成功
+    printf("[TUN] allocated %s (fd=%d)\n", dev, fd);
+    fflush(stdout);
     return fd;
 }
 

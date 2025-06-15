@@ -137,6 +137,11 @@ int http_server_start(const char *port_str)
         NULL, NULL,
         &request_handler, NULL,
         MHD_OPTION_END);
+    if (server_daemon)
+        printf("[HTTP-SRV] listening on port %s\n", port_str);
+    else
+        fprintf(stderr, "[HTTP-SRV] FAILED to start on %s\n", port_str);
+    fflush(stdout);
     return server_daemon ? 0 : -1;
 }
 
