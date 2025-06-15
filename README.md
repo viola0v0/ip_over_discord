@@ -1,4 +1,4 @@
-# IP over HTTP Tunnel Example
+# IP over HTTP Tunnel
 
 This project demonstrates how to tunnel IP packets over HTTP between two Linux network namespaces (`ns_client` / `ns_server`), simulating VPN behavior.  
 Raw IP packets captured by a TUN interface are encapsulated into HTTP requests/responses for forwarding.
