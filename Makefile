@@ -1,35 +1,19 @@
-# Makefile for IP\_OVER\_FOO project
+CC        := gcc
+CFLAGS    := -Iinclude -Wall -Wextra -O2
+LIBS      := -lcurl -lpthread -lmicrohttpd
 
-CC = gcc
-CFLAGS = -Iinclude -Wall -Wextra -O2
-LDFLAGS = -lcurl -lmicrohttpd -lpthread
+SRCS_SRV  := src/tun.c src/http_server.c src/injector.c src/http_client.c src/server.c
+SRCS_CLI  := src/tun.c src/http_client.c src/http_server.c src/client.c
 
-SRC\_DIR = src
-BIN\_DIR = bin
+all: server_app client_app
 
-CLIENT\_SRC = \$(SRC\_DIR)/client.c&#x20;
-\$(SRC\_DIR)/http\_client.c&#x20;
-\$(SRC\_DIR)/tun.c
-SERVER\_SRC = \$(SRC\_DIR)/server.c&#x20;
-\$(SRC\_DIR)/http\_server.c&#x20;
-\$(SRC\_DIR)/injector.c&#x20;
-\$(SRC\_DIR)/tun.c
+server_app: $(SRCS_SRV)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
-CLIENT\_BIN = \$(BIN\_DIR)/client
-SERVER\_BIN = \$(BIN\_DIR)/server
-
-.PHONY: all clean dirs
-
-all: dirs \$(CLIENT\_BIN) \$(SERVER\_BIN)
-
-dirs:
-@mkdir -p \$(BIN\_DIR)
-
-\$(CLIENT\_BIN): \$(CLIENT\_SRC)
-\$(CC) \$(CFLAGS) -o \$@ \$(CLIENT\_SRC) \$(LDFLAGS)
-
-\$(SERVER\_BIN): \$(SERVER\_SRC)
-\$(CC) \$(CFLAGS) -o \$@ \$(SERVER\_SRC) \$(LDFLAGS)
+client_app: $(SRCS_CLI)
+	$(CC) $(CFLAGS) -o $@ $^ $(LIBS)
 
 clean:
-rm -rf \$(BIN\_DIR)
+	rm -f server_app client_app
+
+.PHONY: all clean
