@@ -16,13 +16,13 @@ static pthread_mutex_t curl_mutex = PTHREAD_MUTEX_INITIALIZER;
 #define MAX_PKT 2048
 #define HEARTBEAT_INTERVAL_SEC 30
 
-// 两个独立的 easy handle
+// Two separate easy handles
 static CURL *curl_send_handle = NULL;
 static CURL *curl_poll_handle = NULL;
 
 static struct curl_slist *send_headers = NULL;
 static struct curl_slist *poll_headers = NULL;
-// 对应两个 base URL 和完全路径
+
 static char *g_send_base = NULL, *g_send_url  = NULL;
 static char *g_poll_base = NULL, *g_poll_url  = NULL;
 static time_t last_hb = 0;
@@ -60,14 +60,14 @@ int http_client_init_send(const char *base_url)
     curl_send_handle = curl_easy_init();
     if (!curl_send_handle)
         return -1;
-    // 初始化 send handle 的 header
+    
     send_headers = curl_slist_append(NULL, "Content-Type: application/octet-stream");
     curl_easy_setopt(curl_send_handle, CURLOPT_HTTPHEADER, send_headers);
     curl_easy_setopt(curl_send_handle, CURLOPT_TCP_KEEPALIVE, 1L);
     return 0;
 }
 
-// 初始化用于“拉包”的 handle
+// inisialize the poll handle
 int http_client_init_poll(const char *base_url)
 {
     printf("[H-CLT] init_poll → %s/poll\n", base_url);
@@ -82,7 +82,7 @@ int http_client_init_poll(const char *base_url)
     curl_poll_handle = curl_easy_init();
     if (!curl_poll_handle)
         return -1;
-    // 初始化 poll handle 的 header
+
     poll_headers = curl_slist_append(NULL, "Content-Type: application/octet-stream");
     curl_easy_setopt(curl_poll_handle, CURLOPT_HTTPHEADER, poll_headers);
     curl_easy_setopt(curl_poll_handle, CURLOPT_TIMEOUT_MS, 500L);
@@ -93,7 +93,6 @@ char *http_client_poll(size_t *buflen)
 {
     struct PollCtx ctx = {malloc(MAX_PKT), MAX_PKT, 0};
 
-    // 串行化整个 reset + perform 流程
     LOCK_CURL();
     curl_easy_reset(curl_poll_handle);
     curl_easy_setopt(curl_poll_handle, CURLOPT_URL, g_poll_url);
@@ -112,7 +111,7 @@ char *http_client_poll(size_t *buflen)
     return (char *)ctx.buf;
 }
 
-// 发包也要串行化 Reset → Setopts → Perform
+// Send data to the server using POST
 int http_client_send(const uint8_t *data, size_t len)
 {
     LOCK_CURL();

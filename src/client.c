@@ -18,14 +18,13 @@
 
 static uint8_t buf[BUF_MAX];
 
-// 从 Client 本地 HTTP Server 的 /poll 拉回包，然后注入到 tun0
 void *injector_from_server(void *arg)
 {
     int tun_fd = *(int *)arg;
     while (1)
     {
         size_t len = 0;
-        char *pkt = http_client_poll(&len);  // ← 现在它会 GET http://127.0.0.1:port/poll
+        char *pkt = http_client_poll(&len);
         if (pkt && len > 0)
         {
             printf("[C] got %zu bytes from poll, writing to tun\n", len);
@@ -46,18 +45,18 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // ① 发包目标 → Server
+    // Packet destination → Server
     char server_url[256];
     snprintf(server_url, sizeof(server_url), "http://%s:%s", argv[1], argv[2]);
 
-    // ② 拉包目标 → 自己的 HTTP Server
+    // Packet polling target → local HTTP Server
     char client_url[256];
     snprintf(client_url, sizeof(client_url), "http://127.0.0.1:%s", argv[2]);  // ← 修改
 
     printf("[C] main begins: server_url=%s, client_url=%s\n", server_url, client_url);
     fflush(stdout);
 
-    // 1) 创建并打开 tun0
+    // Create and open tun0
     char tun_name[IF_NAMESIZE] = "tun0";
     int tun_fd = tun_alloc(tun_name, IFF_TUN | IFF_NO_PI);
     printf("[C] tun_alloc -> %s fd=%d\n", tun_name, tun_fd);
@@ -68,7 +67,7 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
 
-    // 2) 启动 Client 本地 HTTP Server，用于接收 Server 发来的 /send
+    // Start the local client HTTP server to receive /send requests from the server
     if (http_server_start(argv[2]) != 0)
     {
         fprintf(stderr, "Failed to start client HTTP server on port %s\n", argv[2]);
@@ -77,7 +76,7 @@ int main(int argc, char *argv[])
     printf("[C] HTTP server up on %s\n", argv[2]);
     fflush(stdout);
 
-    // 3) 初始化 send-handle：POST → Server 的 /send
+    // Initialize send-handle: POST to server's /send endpoint
     if (http_client_init_send(server_url) != 0)
     {
         fprintf(stderr, "http_client_init_send(%s) failed\n", server_url);
@@ -86,8 +85,8 @@ int main(int argc, char *argv[])
     printf("[C] send-handle ready\n");
     fflush(stdout);
 
-    // 4) 初始化 poll-handle：GET ← Client 本地 HTTP Server 的 /poll
-    if (http_client_init_poll(client_url) != 0)  // ← 修改
+    // Initialize poll-handle: GET from the client's local HTTP server /poll endpoint
+    if (http_client_init_poll(client_url) != 0)
     {
         fprintf(stderr, "http_client_init_poll(%s) failed\n", client_url);
         return EXIT_FAILURE;
@@ -95,7 +94,7 @@ int main(int argc, char *argv[])
     printf("[C] poll-handle ready\n");
     fflush(stdout);
 
-    // 5) 启动拉包线程：HTTP poll -> tun0
+    // Start the packet pulling thread: HTTP poll -> tun0
     pthread_t poll_thr;
     if (pthread_create(&poll_thr, NULL, injector_from_server, &tun_fd) != 0)
     {
@@ -105,7 +104,7 @@ int main(int argc, char *argv[])
     printf("[C] injector_from_server thread spawned\n");
     fflush(stdout);
 
-    // 6) 主循环：从 tun0 读包，POST 到 Server 的 /send
+    // Main loop: read packets from tun0 and POST to the server's /send endpoint
     while (1)
     {
         ssize_t n = tun_read(tun_fd, buf, BUF_MAX);
@@ -115,10 +114,9 @@ int main(int argc, char *argv[])
             fflush(stdout);
             http_client_send(buf, n);
         }
-        http_client_heartbeat();  // 心跳保持连接
+        http_client_heartbeat();
     }
 
-    // 理论上不会走到这里
     http_client_cleanup();
     http_server_stop();
     close(tun_fd);

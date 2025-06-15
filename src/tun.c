@@ -17,7 +17,7 @@ int tun_alloc(char *dev, int flags)
     struct ifreq ifr;
     int fd, err;
 
-    // 打开 TUN 设备节点
+    // open /dev/net/tun
     if ((fd = open("/dev/net/tun", O_RDWR)) < 0)
     {
         perror("open /dev/net/tun");
@@ -31,7 +31,7 @@ int tun_alloc(char *dev, int flags)
         strncpy(ifr.ifr_name, dev, IFNAMSIZ);
     }
 
-    // ioctl 创建/绑定设备
+    // ioctl TUNSETIFF
     if ((err = ioctl(fd, TUNSETIFF, (void *)&ifr)) < 0)
     {
         perror("ioctl TUNSETIFF");
@@ -39,9 +39,8 @@ int tun_alloc(char *dev, int flags)
         return -1;
     }
 
-    // 返回实际分配的设备名称
+    // retrieve the device name
     strcpy(dev, ifr.ifr_name);
-    // —— 插桩：tun_alloc 成功
     printf("[TUN] allocated %s (fd=%d)\n", dev, fd);
     fflush(stdout);
     return fd;

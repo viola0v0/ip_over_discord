@@ -11,11 +11,13 @@ static volatile int injector_running = 0;
 static pthread_t injector_thread;
 static int g_tun_fd;
 
+// Loop to read packets from the HTTP client and write them to the TUN interface
 static void *injector_loop(void *arg)
 {
     printf("[INJ] injector_loop running\n");
     fflush(stdout);
 
+    // Initialize the HTTP client for polling packets
     while (injector_running)
     {
         size_t pkt_len = 0;
@@ -46,6 +48,7 @@ static void *injector_loop(void *arg)
     return NULL;
 }
 
+// Start the injector thread to read packets from the HTTP client and write them to the TUN interface
 int injector_start(int tun_fd)
 {
     g_tun_fd = tun_fd;
@@ -63,10 +66,11 @@ void injector_stop(void)
     http_client_cleanup();
 }
 
+// Add a route to the specified subnet via the given TUN interface
 int injector_add_route(const char *subnet_cidr, const char *tun_name)
 {
     char cmd[128];
     snprintf(cmd, sizeof(cmd), "ip route replace %s dev %s", subnet_cidr, tun_name);
-    (void)system(cmd); // 忽略返回值——总之要写上去
+    (void)system(cmd);
     return 0;
 }
